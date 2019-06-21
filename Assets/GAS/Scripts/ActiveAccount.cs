@@ -11,29 +11,17 @@ public class ActiveAccount : MonoBehaviour {
 	private UiAccountManager GetLoginCanvas;
 
 
-	// Use this for initialization
-	void Start () {
-		GetLoginCanvas = gameObject.GetComponent<UiAccountManager>();
+    void Start() => GetLoginCanvas = gameObject.GetComponent<UiAccountManager>();
 
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    public void Resend() => StartCoroutine(Query_Php("Resend"));
 
-	public void Resend(){
-		StartCoroutine (Query_Php("Resend"));
-	}
+    public void Active() => StartCoroutine(Query_Php("Active"));
 
-	public void Active(){
-		StartCoroutine (Query_Php("Active"));
-	}
-	IEnumerator Query_Php(string type){
+    IEnumerator Query_Php(string type){
 		if (type == "Active") {
 			WWW query = new WWW (activeURL + "?" + "code=" + Code.text + "&secure=" + securePassword);
 			yield return query;
-			if (query.text.Trim () == "1") {
+            if (RemoveExceptNumber(query.text.Trim ()) == "1") {
 				GetLoginCanvas.ToggleCanvas ("login");
 			} else {
 				WarningMSG.text = query.text;
@@ -42,9 +30,10 @@ public class ActiveAccount : MonoBehaviour {
 			string getTempAccount = PlayerPrefs.GetString ("TempUser");
 			WWW query = new WWW (resendURL + "?" + "username=" + getTempAccount + "&secure=" + securePassword);
 			yield return query;
-			if (query.text.Trim () == "1") {
+            string[] split = query.text.Split(',');
+            if (RemoveExceptNumber(split[0]) == "1") {
 				WarningMSG.color = Color.green;
-				WarningMSG.text = "Send Code To your Email";
+				WarningMSG.text = "Send Code To your Email: " + split[1];
 			} else {
 				WarningMSG.color = Color.red;
 
@@ -52,4 +41,16 @@ public class ActiveAccount : MonoBehaviour {
 			}
 		}
 	}
+    
+    static string RemoveExceptNumber(string s)
+    {
+        string result = string.Empty;
+        foreach (var c in s)
+        {
+            int ascii = (int)c;
+            if ((ascii >= 48 && ascii <= 57))
+                result += c;
+        }
+        return result;
+    }
 }
